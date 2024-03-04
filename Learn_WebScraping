@@ -1,0 +1,40 @@
+import requests
+from bs4 import BeautifulSoup
+from openpyxl import Workbook, load_workbook
+from datetime import datetime
+
+def create_workbook():
+   
+    try:
+        workbook = load_workbook(filename="preworkout.xlsx")
+        sheet = workbook.active
+    except FileNotFoundError:
+        workbook = Workbook()
+        sheet = workbook.active
+        sheet["A1"] = "Date"
+        sheet["B1"] = "Price"
+        sheet["C1"] = "Website"
+    return workbook, sheet
+
+def get_price(url):
+    session = requests.Session()
+    response = session.get(url)
+    soup = BeautifulSoup(response.content, 'html.parser')
+    price_element = soup.find('span', class_='price')
+    price = price_element.get_text().strip()
+    return price
+
+def save_price_to_workbook(workbook, sheet, price, url):
+    date = datetime.today().strftime('%Y-%m-%d')
+    row = [date, price, url]
+    sheet.append(row)
+    workbook.save(filename="preworkout.xlsx")
+
+def main(url):
+    workbook, sheet = create_workbook()
+    price = get_price(url)
+    save_price_to_workbook(workbook, sheet, price,url)
+
+
+url = input("Enter URL:" )
+main(url)
